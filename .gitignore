@@ -1,0 +1,89 @@
+# ===============================
+# Python / Flask
+# ===============================
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.so
+
+# Compiled C files
+*.pyd
+
+# Firebase service account key (DO NOT COMMIT SECRETS)
+firebase_key.json
+*.pem
+*.key
+
+# Local SQLite databases (if used)
+*.sqlite3
+*.db
+
+# Logs and test artifacts
+*.log
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+.cache/
+
+# Build artifacts
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Jupyter Notebooks
+*.ipynb
+
+# ===============================
+# Editors / IDEs
+# ===============================
+
+# VS Code
+.vscode/
+
+# JetBrains (PyCharm, IntelliJ, etc.)
+.idea/
+
+# VS Code workspace backups
+*.code-workspace
+
+# ===============================
+# Operating System files
+# ===============================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# Temp files
+*.tmp
+*.swp
+*.bak
+*.orig
+
+# ===============================
+# Deployment configs (if secret)
+# ===============================
+
+# Render or other CI/CD keys or configs
+render.yaml
