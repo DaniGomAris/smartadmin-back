@@ -12,6 +12,7 @@ def create_app():
     env = os.getenv("FLASK_ENV", "development")
     app.config.from_object(config_by_name[env])
 
+    app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True # Eliminar al terminar pruebas
     CORS(app)
     jwt.init_app(app)
     limiter.init_app(app)

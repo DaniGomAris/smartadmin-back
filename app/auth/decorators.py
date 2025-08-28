@@ -12,14 +12,12 @@ def role_required(allowed_roles):
         def wrapper(*args, **kwargs):
             identity = get_jwt_identity()
 
-            # identity es un diccionario {id, role}
             user_id = identity.get("id")
             role = identity.get("role")
 
             if role not in allowed_roles:
                 return jsonify({"error": "Unauthorized – Access denied"}), 403
 
-            # Paso también el user_id y role al endpoint si se necesitan
             return fn(user_id=user_id, role=role, *args, **kwargs)
         return wrapper
     return decorator
