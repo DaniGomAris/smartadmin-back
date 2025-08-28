@@ -1,4 +1,4 @@
-from app.utils.user_validator import UserValidator
+from app.validators.user_validator import UserValidator
 
 validator = UserValidator(None)
 

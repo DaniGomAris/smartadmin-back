@@ -1,23 +1,18 @@
 from functools import wraps
-from flask import jsonify
 from flask_jwt_extended import get_jwt_identity
+from flask import jsonify
 
-def role_required(allowed_roles):
+def role_required(allowed_roles: list):
     """
-    Decorador que valida si el usuario tiene uno de los roles permitidos
-    usando directamente el rol guardado en el JWT
+    Decorador para rutas protegidas por rol
     """
-    def decorator(fn):
-        @wraps(fn)
+    def decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             identity = get_jwt_identity()
-
-            user_id = identity.get("id")
-            role = identity.get("role")
-
+            role = identity.get("role", "user")
             if role not in allowed_roles:
-                return jsonify({"error": "Unauthorized – Access denied"}), 403
-
-            return fn(user_id=user_id, role=role, *args, **kwargs)
+                return jsonify({"error": "Unauthorized"}), 403
+            return func(*args, role=role, **kwargs)
         return wrapper
     return decorator
