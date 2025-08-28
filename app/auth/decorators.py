@@ -1,20 +1,25 @@
 from functools import wraps
 from flask import jsonify
-from app.services.firebase import db
 from flask_jwt_extended import get_jwt_identity
 
-def admin_required(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        user_id = get_jwt_identity()
-        user_doc = db.collection("users").document(user_id).get()
+def role_required(allowed_roles):
+    """
+    Decorador que valida si el usuario tiene uno de los roles permitidos
+    usando directamente el rol guardado en el JWT
+    """
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            identity = get_jwt_identity()
 
-        if not user_doc.exists:
-            return jsonify({"error": "User not found"}), 404
+            # identity es un diccionario {id, role}
+            user_id = identity.get("id")
+            role = identity.get("role")
 
-        user_data = user_doc.to_dict()
-        if user_data.get("role") != "admin":
-            return jsonify({"error": "Unauthorized – Admin only"}), 403
+            if role not in allowed_roles:
+                return jsonify({"error": "Unauthorized – Access denied"}), 403
 
-        return fn(*args, **kwargs)
-    return wrapper
+            # Paso también el user_id y role al endpoint si se necesitan
+            return fn(user_id=user_id, role=role, *args, **kwargs)
+        return wrapper
+    return decorator

@@ -14,7 +14,6 @@ class User:
     def to_dict(self):
         """
         Converts the User object into a dictionary to be stored in Firestore
-        Excludes fields like password confirmation and document ID (used as document name)
         """
         return {
             'document_type': self.document_type,

@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from .extensions import jwt, limiter
 from .services.firebase import db
@@ -9,7 +9,6 @@ import os
 def create_app():
     app = Flask(__name__)
     
-    # Carga la configuración desde config.py según ENV
     env = os.getenv("FLASK_ENV", "development")
     app.config.from_object(config_by_name[env])
 
@@ -18,5 +17,21 @@ def create_app():
     limiter.init_app(app)
 
     app.register_blueprint(user_bp, url_prefix="/users")
+
+    @jwt.unauthorized_loader
+    def unauthorized_response(err_str):
+        return jsonify({"error": "Missing or invalid Authorization Header"}), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token_response(err_str):
+        return jsonify({"error": "Invalid token"}), 422
+
+    @jwt.expired_token_loader
+    def expired_token_response(jwt_header, jwt_payload):
+        return jsonify({"error": "Token has expired"}), 401
+
+    @jwt.revoked_token_loader
+    def revoked_token_response(jwt_header, jwt_payload):
+        return jsonify({"error": "Token has been revoked"}), 401
 
     return app

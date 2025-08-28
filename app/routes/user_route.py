@@ -7,9 +7,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.services.firebase import db
 from app.extensions import limiter
 from app.utils.user_validator import UserValidator
-from app.auth.decorators import admin_required
+from app.auth.decorators import role_required
 
-# Configure logger
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -21,20 +21,30 @@ def extract_fields(data, *fields):
 
 
 # ---------------------------
-# Get all users (admin only)
+# Get all users (Role required)
 # ---------------------------
 @user_bp.route("/", methods=["GET"])
-#@jwt_required()
-#@admin_required
-def get_users():
+@jwt_required()
+@role_required(["admin", "master"])
+def get_users(user_id, role):
     try:
         users = []
         for doc in db.collection("users").stream():
             user_data = doc.to_dict()
-            user_data.pop("password", None)
-            user_data["id"] = doc.id
-            users.append(user_data)
+            user_role = user_data.get("role")
+
+            if role == "master" and user_role == "admin":
+                user_data.pop("password", None)
+                user_data["id"] = doc.id
+                users.append(user_data)
+
+            elif role == "admin" and user_role not in ["admin", "master"]:
+                user_data.pop("password", None)
+                user_data["id"] = doc.id
+                users.append(user_data)
+
         return jsonify(users), 200
+
     except Exception as e:
         logger.error(f"Error in get_users: {e}", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
@@ -100,16 +110,33 @@ def add_user():
 
 
 # ---------------------------
-# Delete user (admin only)
+# Delete user (Role required)
 # ---------------------------
 @user_bp.route("/<user_id>", methods=["DELETE"])
 @jwt_required()
-@admin_required
-def delete_user(user_id):
+@role_required(["admin", "master"])
+def delete_user(user_id, role, **kwargs):
     try:
+        user_doc = db.collection("users").document(user_id).get()
+
+        if not user_doc.exists:
+            return jsonify({"error": "User not found"}), 404
+
+        user_data = user_doc.to_dict()
+        target_role = user_data.get("role")
+
+        if role == "master":
+            if target_role != "admin":
+                return jsonify({"error": "Masters can only delete admins"}), 403
+
+        elif role == "admin":
+            if target_role in ["admin", "master"]:
+                return jsonify({"error": "Admins cannot delete admins or masters"}), 403
+
         db.collection("users").document(user_id).delete()
         logger.info(f"User deleted: {user_id}")
         return jsonify({"message": "User deleted"}), 200
+
     except Exception as e:
         logger.error(f"Error in delete_user: {e}", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
@@ -152,13 +179,19 @@ def login_user():
         if not check_password_hash(user_data.get("password", ""), password):
             return jsonify({"error": "Invalid password"}), 401
 
-        access_token = create_access_token(identity=user.id)
+        role = user_data.get("role", "user")
+
+        access_token = create_access_token(identity={
+            "id": user.id,
+            "role": role
+        })
+
         user_data.pop("password", None)
         logger.info(f"User logged in: {user.id}")
 
         return jsonify({
             "access_token": access_token,
-            "user": {**user_data, "id": user.id}
+            "user": {**user_data, "id": user.id, "role": role}
         }), 200
 
     except Exception as e:
@@ -172,7 +205,9 @@ def login_user():
 @user_bp.route("/me", methods=["GET"])
 @jwt_required()
 def get_logged_user():
-    user_id = get_jwt_identity()
+    identity = get_jwt_identity()
+    user_id = identity.get("id")
+
     try:
         user_doc = db.collection("users").document(user_id).get()
         if not user_doc.exists:
@@ -180,7 +215,14 @@ def get_logged_user():
 
         user_data = user_doc.to_dict()
         user_data.pop("password", None)
-        return jsonify({**user_data, "id": user_doc.id}), 200
+
+        return jsonify({
+            "id": user_doc.id,
+            "email": user_data.get("email"),
+            "name": user_data.get("name"),
+            "role": identity.get("role", "user")
+        }), 200
+
     except Exception as e:
         logger.error(f"Error in get_logged_user: {e}", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
