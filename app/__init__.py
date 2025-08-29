@@ -12,7 +12,7 @@ def create_app():
     env = os.getenv("FLASK_ENV", "development")
     app.config.from_object(config_by_name[env])
 
-    app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True # Eliminar al terminar pruebas
+    app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
     CORS(app)
     jwt.init_app(app)
     limiter.init_app(app)
@@ -35,4 +35,7 @@ def create_app():
     def revoked_token_response(jwt_header, jwt_payload):
         return jsonify({"error": "Token has been revoked"}), 401
 
+    print("📌 Rutas registradas:")
+    for rule in app.url_map.iter_rules():   
+        print(rule, rule.methods)
     return app
