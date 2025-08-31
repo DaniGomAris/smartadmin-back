@@ -1,21 +1,28 @@
+# user_route.py
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from app.services.user_service import UserService
 from app.auth.decorators import role_required
-from app.extensions import limiter
 
 user_bp = Blueprint("users", __name__)
 service = UserService()
 
-@user_bp.route("/by-role", methods=["GET"])
+# GET /users -> listar usuarios según rol
+@user_bp.route("/get-users", methods=["GET"])
 @jwt_required()
 @role_required(["admin", "master"])
-def get_users_by_role():
-    identity = get_jwt_identity()  
-    role = identity.get_json("role")
-    return jsonify(service.get_users_by_role(role))
+def get_users():
+    identity = get_jwt_identity()
+    role = identity.get("role")
+    return jsonify(service.get_users(role))
 
-@user_bp.route("/", methods=["POST"])
+# GET /users -> listar usuarios según rol
+@user_bp.route("/all-users", methods=["GET"])
+def get_all_users():
+    return jsonify(service.get_all_users())
+
+# POST /users -> crear nuevo usuario
+@user_bp.route("/create-user", methods=["POST"])
 @jwt_required()
 def add_user():
     identity = get_jwt_identity()
@@ -23,13 +30,7 @@ def add_user():
     response, status = service.add_user(identity, data)
     return jsonify(response), status
 
-@user_bp.route("/<user_id>", methods=["DELETE"])
-@jwt_required()
-@role_required(["admin", "master"])
-def delete_user(user_id, role, **kwargs):
-    response, status = service.delete_user(role, user_id)
-    return jsonify(response), status
-
+# PUT /users/<user_id> -> actualizar usuario
 @user_bp.route("/<user_id>", methods=["PUT"])
 @jwt_required()
 def update_user(user_id):
@@ -38,16 +39,12 @@ def update_user(user_id):
     response, status = service.update_user(identity, user_id, data)
     return jsonify(response), status
 
-@user_bp.route("/login", methods=["POST"])
-@limiter.limit("3 per minute")
-def login_user():
-    data = request.get_json()
-    response, status = service.login_user(data.get("email"), data.get("password"))
-    return jsonify(response), status
-
-@user_bp.route("/me", methods=["GET"])
+# DELETE /users/<user_id> -> eliminar usuario
+@user_bp.route("/<user_id>", methods=["DELETE"])
 @jwt_required()
-def get_logged_user():
+@role_required(["admin", "master"])
+def delete_user(user_id):
     identity = get_jwt_identity()
-    response, status = service.get_logged_user(identity.get("id"), identity.get("role"))
+    role = identity.get("role")
+    response, status = service.delete_user(role, user_id)
     return jsonify(response), status

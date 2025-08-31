@@ -3,6 +3,7 @@ from flask_cors import CORS
 from .extensions import jwt, limiter
 from .services.firebase import db
 from .routes.user_route import user_bp
+from .routes.auth_route import auth_bp
 from config import config_by_name
 import os
 
@@ -11,14 +12,15 @@ def create_app():
     
     env = os.getenv("FLASK_ENV", "development")
     app.config.from_object(config_by_name[env])
-
     app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
+    
     CORS(app)
     jwt.init_app(app)
-    limiter.init_app(app)
+    #limiter.init_app(app)
 
     app.register_blueprint(user_bp, url_prefix="/users")
-
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    
     @jwt.unauthorized_loader
     def unauthorized_response(err_str):
         return jsonify({"error": "Missing or invalid Authorization Header"}), 401
@@ -35,7 +37,7 @@ def create_app():
     def revoked_token_response(jwt_header, jwt_payload):
         return jsonify({"error": "Token has been revoked"}), 401
 
-    print("📌 Rutas registradas:")
+    print("Rutas registradas:")
     for rule in app.url_map.iter_rules():   
         print(rule, rule.methods)
     return app

@@ -8,10 +8,10 @@ from app.utils.permission_utils import can_delete_user, can_update_user, can_ass
 logger = logging.getLogger(__name__)
 validator = UserValidator(db)
 
-
 class UserService:
+
     @staticmethod
-    def get_users_by_role(current_role):
+    def get_users(current_role):
         users = []
         for doc in db.collection("users").stream():
             user_data = doc.to_dict()
@@ -27,11 +27,30 @@ class UserService:
                 users.append(user_data)
         return users
 
+    # Obtener todos los usuarios para pruebas
+    @staticmethod
+    def get_all_users():
+        users = []
+        for doc in db.collection("users").stream():
+            user_data = doc.to_dict()
+            user_data["id"] = doc.id
+            users.append(user_data)
+        return users
+    
+    @staticmethod
+    def get_all_users():
+        users = []
+        for doc in db.collection("users").stream():
+            user_data = doc.to_dict()
+            user_data.pop("password", None)
+            user_data["id"] = doc.id
+            users.append(user_data)
+        return users
+
     @staticmethod
     def add_user(identity, data):
         current_role = identity.get("role")
         current_id = identity.get("id")
-
         document = data.get("document")
         document_type = data.get("document_type")
         role = data.get("role")
@@ -116,7 +135,6 @@ class UserService:
     def update_user(identity, user_id, data):
         current_role = identity.get("role")
         current_id = identity.get("id")
-
         try:
             target_doc = db.collection("users").document(user_id).get()
             if not target_doc.exists:
@@ -160,22 +178,22 @@ class UserService:
             return {"error": "Internal server error"}, 500
 
     @staticmethod
-    def login_user(email, password):
+    def login_user(document, password):
         try:
-            user_stream = db.collection("users").where("email", "==", email).stream()
-            user = next(user_stream, None)
-            if not user:
-                return {"error": "User not found"}, 404
+            doc_ref = db.collection("users").document(document)
+            user_doc = doc_ref.get()
+            if not user_doc.exists:
+                return {"error": "Documento o contraseña incorrectos"}, 404
 
-            user_data = user.to_dict()
+            user_data = user_doc.to_dict()
             if not verify_password(user_data.get("password", ""), password):
-                return {"error": "Invalid password"}, 401
+                return {"error": "Documento o contraseña incorrectos"}, 401
 
             role = user_data.get("role", "user")
-            access_token = create_access_token(identity={"id": user.id, "role": role})
+            access_token = create_access_token(identity={"id": document, "role": role})
             user_data.pop("password", None)
-            logger.info(f"User logged in: {user.id}")
-            return {"access_token": access_token, "user": {**user_data, "id": user.id, "role": role}}, 200
+            logger.info(f"User logged in: {document}")
+            return {"access_token": access_token, "user": {**user_data, "id": document, "role": role}}, 200
         except Exception as e:
             logger.error(f"Error in login_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
