@@ -5,6 +5,10 @@ from app.services.firebase import db
 from app.validators.user_validator import UserValidator
 from app.utils.permission_utils import can_delete_user, can_update_user, can_assign_role
 
+# ----- QUITAR CUANDO SE TERMINEN LAS PRUEBAS -----
+from flask import Response
+import json
+
 logger = logging.getLogger(__name__)
 validator = UserValidator(db)
 
@@ -17,16 +21,18 @@ class UserService:
             user_data = doc.to_dict()
             user_role = user_data.get("role")
 
-            if current_role == "master" and user_role == "admin":
+            if current_role == "master" and user_role.lower() == "admin":
                 user_data.pop("password", None)
                 user_data["id"] = doc.id
                 users.append(user_data)
-            elif current_role == "admin" and user_role == "user":
+            elif current_role == "admin" and user_role.lower() == "user":
                 user_data.pop("password", None)
                 user_data["id"] = doc.id
                 users.append(user_data)
         return users
 
+
+    # ----- QUITAR CUANDO SE TERMINEN LAS PRUEBAS -----
     # Obtener todos los usuarios para pruebas
     @staticmethod
     def get_all_users():
@@ -37,15 +43,30 @@ class UserService:
             users.append(user_data)
         return users
     
+    
+    # ----- QUITAR CUANDO SE TERMINEN LAS PRUEBAS -----
+    # Obtener todos los usuarios para pruebas por consola
     @staticmethod
-    def get_all_users():
+    def get_all_users_console():
         users = []
         for doc in db.collection("users").stream():
-            user_data = doc.to_dict()
-            user_data.pop("password", None)
-            user_data["id"] = doc.id
-            users.append(user_data)
-        return users
+            data = doc.to_dict()
+
+            ordered_data = {
+                doc.id: {
+                    "name": data.get("name"),
+                    "last_name1": data.get("last_name1"),
+                    "last_name2": data.get("last_name2"),
+                    "password": data.get("password"),
+                    "email": data.get("email"),
+                    "phone": data.get("phone"),
+                    "role": data.get("role")
+                }
+            }
+            users.append(ordered_data)
+        
+        return Response(json.dumps(users, indent=4), mimetype='application/json')
+
 
     @staticmethod
     def add_user(identity, data):
@@ -113,6 +134,7 @@ class UserService:
             logger.error(f"Error in add_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
 
+
     @staticmethod
     def delete_user(current_role, user_id):
         try:
@@ -130,6 +152,7 @@ class UserService:
         except Exception as e:
             logger.error(f"Error in delete_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
+
 
     @staticmethod
     def update_user(identity, user_id, data):
@@ -177,6 +200,7 @@ class UserService:
             logger.error(f"Error updating user {user_id}: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
 
+
     @staticmethod
     def login_user(document, password):
         try:
@@ -197,6 +221,7 @@ class UserService:
         except Exception as e:
             logger.error(f"Error in login_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
+
 
     @staticmethod
     def get_logged_user(user_id, role):

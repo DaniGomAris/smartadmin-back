@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-from .extensions import jwt, limiter
+from .extensions import jwt
 from .services.firebase import db
 from .routes.user_route import user_bp
 from .routes.auth_route import auth_bp
@@ -16,7 +16,6 @@ def create_app():
     
     CORS(app)
     jwt.init_app(app)
-    #limiter.init_app(app)
 
     app.register_blueprint(user_bp, url_prefix="/users")
     app.register_blueprint(auth_bp, url_prefix="/auth")
