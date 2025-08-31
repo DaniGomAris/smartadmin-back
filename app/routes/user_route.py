@@ -7,15 +7,13 @@ from app.extensions import limiter
 user_bp = Blueprint("users", __name__)
 service = UserService()
 
-@user_bp.route("/", methods=["GET"])
+@user_bp.route("/by-role", methods=["GET"])
 @jwt_required()
 @role_required(["admin", "master"])
-def get_users(user_id, role):
+def get_users_by_role():
+    identity = get_jwt_identity()  
+    role = identity.get_json("role")
     return jsonify(service.get_users_by_role(role))
-
-@user_bp.route("/all", methods=["GET"])
-def get_all_users():
-    return jsonify(service.get_all_users())
 
 @user_bp.route("/", methods=["POST"])
 @jwt_required()

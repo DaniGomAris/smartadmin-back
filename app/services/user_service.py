@@ -11,21 +11,13 @@ validator = UserValidator(db)
 
 class UserService:
     @staticmethod
-    def get_all_users():
-        users = [
-            {**user.to_dict(), "id": user.id}
-            for user in db.collection("users").stream()
-        ]
-        return users
-
-    @staticmethod
     def get_users_by_role(current_role):
         users = []
         for doc in db.collection("users").stream():
             user_data = doc.to_dict()
             user_role = user_data.get("role")
 
-            if current_role == "master" and user_role in ["admin", "user"]:
+            if current_role == "master" and user_role == "admin":
                 user_data.pop("password", None)
                 user_data["id"] = doc.id
                 users.append(user_data)
@@ -80,8 +72,6 @@ class UserService:
             conflict_errors["email"] = "Email already registered"
         if conflict_errors:
             return {"error": conflict_errors}, 409
-
-        # Validar roles
         if not can_assign_role(current_role, role):
             return {"error": "You cannot assign this role"}, 403
 
