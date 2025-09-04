@@ -21,7 +21,7 @@ def role_required(allowed_roles: list):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            user_id = get_jwt_identity()   # id como string
+            user_id = get_jwt_identity()
             claims = get_jwt()
             role = claims.get("role", "user")
 

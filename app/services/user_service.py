@@ -2,8 +2,8 @@ import logging
 import json
 from flask import Response
 
-from app.auth.jwt_handler import generate_token
-from app.auth.password_handler import hash_password, verify_password
+from app.auth.jwt_auth import generate_token
+from app.auth.password_auth import hash_password, verify_password
 from app.services.firebase import db
 from app.validators.user_validator import UserValidator
 from app.utils.permission_utils import (
@@ -101,7 +101,6 @@ class UserService:
         password = data.get("password")
         re_password = data.get("re_password")
 
-        # Validaciones de formato
         format_errors = {}
         if not validator.is_valid_document(document):
             format_errors["document"] = "Invalid document format"

@@ -1,9 +1,10 @@
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
 from .extensions import jwt
 from .services.firebase import db
 from .routes.user_route import user_bp
 from .routes.auth_route import auth_bp
+from .handlers import register_all_handlers
 from config import config_by_name
 import os
 
@@ -20,21 +21,8 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix="/users")
     app.register_blueprint(auth_bp, url_prefix="/auth")
     
-    @jwt.unauthorized_loader
-    def unauthorized_response(err_str):
-        return jsonify({"error": "Missing or invalid Authorization Header"}), 401
-
-    @jwt.invalid_token_loader
-    def invalid_token_response(err_str):
-        return jsonify({"error": "Invalid token"}), 422
-
-    @jwt.expired_token_loader
-    def expired_token_response(jwt_header, jwt_payload):
-        return jsonify({"error": "Token has expired"}), 401
-
-    @jwt.revoked_token_loader
-    def revoked_token_response(jwt_header, jwt_payload):
-        return jsonify({"error": "Token has been revoked"}), 401
+    # Registro de handlers
+    register_all_handlers(app)
 
     print("Rutas registradas:")
     for rule in app.url_map.iter_rules():   

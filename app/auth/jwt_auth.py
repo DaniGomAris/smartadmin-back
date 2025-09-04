@@ -1,5 +1,4 @@
 from flask_jwt_extended import create_access_token
-from datetime import timedelta
 
 def generate_token(user_id: str, role: str) -> str:
     """
