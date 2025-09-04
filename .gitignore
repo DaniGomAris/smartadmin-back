@@ -2,6 +2,9 @@
 # Python / Flask
 # ===============================
 
+# Run app
+app.py
+
 # Virtual environments
 venv/
 env/
