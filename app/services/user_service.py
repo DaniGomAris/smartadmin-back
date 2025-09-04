@@ -1,57 +1,73 @@
 import logging
-from flask_jwt_extended import create_access_token
+import json
+from flask import Response
+
+from app.auth.jwt_handler import generate_token
 from app.auth.password_handler import hash_password, verify_password
 from app.services.firebase import db
 from app.validators.user_validator import UserValidator
-from app.utils.permission_utils import can_delete_user, can_update_user, can_assign_role
-
-# ----- QUITAR CUANDO SE TERMINEN LAS PRUEBAS -----
-from flask import Response
-import json
+from app.utils.permission_utils import (
+    can_delete_user,
+    can_update_user,
+    can_assign_role,
+)
 
 logger = logging.getLogger(__name__)
 validator = UserValidator(db)
 
-class UserService:
 
+class UserService:
+    """
+    Servicio que maneja la lógica de negocio relacionada con los usuarios.
+    Incluye operaciones CRUD, login y validaciones.
+    """
+
+    # ==============================
+    # GET USERS
+    # ==============================
     @staticmethod
-    def get_users(current_role):
+    def get_users(current_role: str):
+        """
+        Retorna los usuarios visibles según el rol del usuario logueado.
+        - master -> puede ver admins
+        - admin  -> puede ver users
+        """
         users = []
         for doc in db.collection("users").stream():
             user_data = doc.to_dict()
-            user_role = user_data.get("role")
+            user_role = user_data.get("role", "").lower()
 
-            if current_role == "master" and user_role.lower() == "admin":
+            if current_role == "master" and user_role == "admin":
                 user_data.pop("password", None)
                 user_data["id"] = doc.id
                 users.append(user_data)
-            elif current_role == "admin" and user_role.lower() == "user":
+            elif current_role == "admin" and user_role == "user":
                 user_data.pop("password", None)
                 user_data["id"] = doc.id
                 users.append(user_data)
         return users
 
-
-    # ----- QUITAR CUANDO SE TERMINEN LAS PRUEBAS -----
-    # Obtener todos los usuarios para pruebas
+    # ----- MÉTODOS DE PRUEBA (QUITAR EN PRODUCCIÓN) -----
     @staticmethod
     def get_all_users():
+        """
+        Retorna TODOS los usuarios sin filtrar roles (SOLO PARA PRUEBAS).
+        """
         users = []
         for doc in db.collection("users").stream():
             user_data = doc.to_dict()
             user_data["id"] = doc.id
             users.append(user_data)
         return users
-    
-    
-    # ----- QUITAR CUANDO SE TERMINEN LAS PRUEBAS -----
-    # Obtener todos los usuarios para pruebas por consola
+
     @staticmethod
     def get_all_users_console():
+        """
+        Retorna TODOS los usuarios con indentación en consola (SOLO PARA PRUEBAS).
+        """
         users = []
         for doc in db.collection("users").stream():
             data = doc.to_dict()
-
             ordered_data = {
                 doc.id: {
                     "name": data.get("name"),
@@ -60,18 +76,20 @@ class UserService:
                     "password": data.get("password"),
                     "email": data.get("email"),
                     "phone": data.get("phone"),
-                    "role": data.get("role")
+                    "role": data.get("role"),
                 }
             }
             users.append(ordered_data)
-        
-        return Response(json.dumps(users, indent=4), mimetype='application/json')
+        return Response(json.dumps(users, indent=4), mimetype="application/json")
 
-
+    # ==============================
+    # ADD USER
+    # ==============================
     @staticmethod
-    def add_user(identity, data):
-        current_role = identity.get("role")
-        current_id = identity.get("id")
+    def add_user(current_role: str, data: dict):
+        """
+        Registra un nuevo usuario validando permisos, formato y duplicados.
+        """
         document = data.get("document")
         document_type = data.get("document_type")
         role = data.get("role")
@@ -83,7 +101,7 @@ class UserService:
         password = data.get("password")
         re_password = data.get("re_password")
 
-        # Validaciones
+        # Validaciones de formato
         format_errors = {}
         if not validator.is_valid_document(document):
             format_errors["document"] = "Invalid document format"
@@ -112,11 +130,11 @@ class UserService:
             conflict_errors["email"] = "Email already registered"
         if conflict_errors:
             return {"error": conflict_errors}, 409
+
         if not can_assign_role(current_role, role):
             return {"error": "You cannot assign this role"}, 403
 
         try:
-            document_id = str(document)
             new_user = {
                 "document_type": document_type,
                 "role": role,
@@ -127,37 +145,24 @@ class UserService:
                 "phone": phone,
                 "password": hash_password(password),
             }
-            db.collection("users").document(document_id).set(new_user)
-            logger.info(f"New user registered: {document} by {current_id}")
+            db.collection("users").document(str(document)).set(new_user)
+            logger.info(f"New user registered: {document} by role {current_role}")
             return {"message": "User added", "id": document}, 201
         except Exception as e:
             logger.error(f"Error in add_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
 
-
+    # ==============================
+    # UPDATE USER
+    # ==============================
     @staticmethod
-    def delete_user(current_role, user_id):
-        try:
-            target_doc = db.collection("users").document(user_id).get()
-            if not target_doc.exists:
-                return {"error": "User not found"}, 404
-
-            target_role = target_doc.to_dict().get("role", "user")
-            if not can_delete_user(current_role, target_role):
-                return {"error": "You do not have permission to delete this user"}, 403
-
-            db.collection("users").document(user_id).delete()
-            logger.info(f"User deleted: {user_id}")
-            return {"message": "User deleted"}, 200
-        except Exception as e:
-            logger.error(f"Error in delete_user: {e}", exc_info=True)
-            return {"error": "Internal server error"}, 500
-
-
-    @staticmethod
-    def update_user(identity, user_id, data):
+    def update_user(identity: dict, user_id: str, data: dict):
+        """
+        Actualiza datos de un usuario validando permisos y formato.
+        """
         current_role = identity.get("role")
         current_id = identity.get("id")
+
         try:
             target_doc = db.collection("users").document(user_id).get()
             if not target_doc.exists:
@@ -195,17 +200,49 @@ class UserService:
                 db.collection("users").document(user_id).update(update_data)
                 logger.info(f"User {user_id} updated by {current_id}")
                 return {"message": "User updated"}, 200
+
             return {"error": "No valid fields to update"}, 400
         except Exception as e:
             logger.error(f"Error updating user {user_id}: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
 
-
+    # ==============================
+    # DELETE USER
+    # ==============================
     @staticmethod
-    def login_user(document, password):
+    def delete_user(identity: dict, user_id: str):
+        """
+        Elimina un usuario validando permisos.
+        """
+        current_role = identity.get("role")
+
         try:
-            doc_ref = db.collection("users").document(document)
-            user_doc = doc_ref.get()
+            target_doc = db.collection("users").document(user_id).get()
+            if not target_doc.exists:
+                return {"error": "User not found"}, 404
+
+            target_role = target_doc.to_dict().get("role", "user")
+            if not can_delete_user(current_role, target_role):
+                return {"error": "You do not have permission to delete this user"}, 403
+
+            db.collection("users").document(user_id).delete()
+            logger.info(f"User deleted: {user_id}")
+            return {"message": "User deleted"}, 200
+        except Exception as e:
+            logger.error(f"Error in delete_user: {e}", exc_info=True)
+            return {"error": "Internal server error"}, 500
+
+    # ==============================
+    # LOGIN
+    # ==============================
+    @staticmethod
+    def login_user(document: str, password: str):
+        """
+        Login de usuario validando documento y contraseña.
+        Retorna JWT.
+        """
+        try:
+            user_doc = db.collection("users").document(document).get()
             if not user_doc.exists:
                 return {"error": "Documento o contraseña incorrectos"}, 404
 
@@ -214,24 +251,32 @@ class UserService:
                 return {"error": "Documento o contraseña incorrectos"}, 401
 
             role = user_data.get("role", "user")
-            access_token = create_access_token(identity={"id": document, "role": role})
-            user_data.pop("password", None)
-            logger.info(f"User logged in: {document}")
-            return {"access_token": access_token, "user": {**user_data, "id": document, "role": role}}, 200
+            access_token = generate_token(document, role)
+
+            logger.info(f"User logged in: {document} with role {role}")
+            return {
+                "message": "Login exitoso",
+                "access_token": access_token,
+                "user": {"id": document, "role": role},
+            }, 200
         except Exception as e:
             logger.error(f"Error in login_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
 
-
+    # ==============================
+    # GET LOGGED USER
+    # ==============================
     @staticmethod
-    def get_logged_user(user_id, role):
+    def get_logged_user(user_id: str, role: str):
+        """
+        Retorna información básica del usuario logueado.
+        """
         try:
             user_doc = db.collection("users").document(user_id).get()
             if not user_doc.exists:
                 return {"error": "User not found"}, 404
-            user_data = user_doc.to_dict()
-            user_data.pop("password", None)
-            return {"id": user_doc.id, "email": user_data.get("email"), "name": user_data.get("name"), "role": role}, 200
+
+            return {"id": user_doc.id, "role": role}, 200
         except Exception as e:
             logger.error(f"Error in get_logged_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500

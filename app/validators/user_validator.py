@@ -66,13 +66,13 @@ class UserValidator:
     # ---------------------------
     def is_valid_role(self, role) -> bool:
         """
-        Validates that the role is 'admin'
+        Validates that the role is 'admin', 'master', or 'user'
         """
         if not self.is_present(role):
             return False
         if not isinstance(role, str):
             return False
-        return role == 'admin'
+        return role in {"admin", "master", "user"}
 
 
     # ---------------------------
