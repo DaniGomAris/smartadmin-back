@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# --- Dev / Testing ---
+pytest==7.4.0
+pytest-mock==3.12.1
