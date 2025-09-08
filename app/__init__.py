@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from .extensions import jwt
-from .services.firebase import db
+from .config.firebase import db
 from .routes.user_route import user_bp
 from .routes.auth_route import auth_bp
 from .handlers import register_all_handlers
@@ -21,7 +21,6 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix="/users")
     app.register_blueprint(auth_bp, url_prefix="/auth")
     
-    # Registro de handlers
     register_all_handlers(app)
 
     print("Rutas registradas:")

@@ -4,7 +4,7 @@ from flask import Response
 
 from app.auth.jwt_auth import generate_token
 from app.auth.password_auth import hash_password, verify_password
-from app.services.firebase import db
+from app.config.firebase import db
 from app.validators.user_validator import UserValidator
 from app.utils.permission_utils import (
     can_delete_user,

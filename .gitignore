@@ -1,7 +1,3 @@
-# ===============================
-# Python / Flask
-# ===============================
-
 # Run app
 app.py
 
@@ -48,10 +44,6 @@ dist/
 # Jupyter Notebooks
 *.ipynb
 
-# ===============================
-# Editors / IDEs
-# ===============================
-
 # VS Code
 .vscode/
 
@@ -60,10 +52,6 @@ dist/
 
 # VS Code workspace backups
 *.code-workspace
-
-# ===============================
-# Operating System files
-# ===============================
 
 # Windows
 Thumbs.db
@@ -83,10 +71,6 @@ Desktop.ini
 *.swp
 *.bak
 *.orig
-
-# ===============================
-# Deployment configs (if secret)
-# ===============================
 
 # Render or other CI/CD keys or configs
 render.yaml
