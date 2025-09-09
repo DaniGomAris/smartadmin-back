@@ -1,43 +1,28 @@
-from app.config.mongo_config import db
+from dataclasses import dataclass, asdict
+from typing import Optional
 
-# Conexión a la colección de usuarios en Mongo
-users_collection = db["users"]
+@dataclass
+class User:
+    id: str
+    document_type: str
+    role: str
+    name: str
+    last_name1: str
+    last_name2: str
+    email: str
+    phone: str
+    password: Optional[str] = None
 
-class UserModel:
-    @staticmethod
-    def create_user(user_data: dict):
-        """
-        Inserta un nuevo usuario en MongoDB
-        """
-        return users_collection.insert_one(user_data)
+    def to_dict(self):
+        data = {
+            'document_type': self.document_type,
+            'role': self.role,
+            'name': self.name,
+            'last_name1': self.last_name1,
+            'last_name2': self.last_name2,
+            'email': self.email,
+            'password': self.password,
+            'phone': self.phone
+        }
 
-    @staticmethod
-    def find_by_id(user_id: str):
-        """
-        Busca un usuario por su _id (string)
-        """
-        return users_collection.find_one({"_id": str(user_id)})
 
-    @staticmethod
-    def find_by_email(email: str):
-        """
-        Busca un usuario por email
-        """
-        return users_collection.find_one({"email": email})
-
-    @staticmethod
-    def update_user(user_id: str, update_data: dict):
-        """
-        Actualiza los datos de un usuario
-        """
-        return users_collection.update_one(
-            {"_id": str(user_id)},
-            {"$set": update_data}
-        )
-
-    @staticmethod
-    def delete_user(user_id: str):
-        """
-        Elimina un usuario por _id
-        """
-        return users_collection.delete_one({"_id": str(user_id)})

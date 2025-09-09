@@ -5,8 +5,9 @@ from app.decorators.auth_decorators import token_required, role_required
 user_bp = Blueprint("users", __name__)
 
 # ----- SOLO PRUEBAS -----
-user_bp.route("/all-users", methods=["GET"])(UserController.get_all_users)
-user_bp.route("/all-users-console", methods=["GET"])(UserController.get_all_users_console)
+user_bp.route("/all-users", methods=["GET"])(
+    UserController.get_all_users
+)
 
 # GET /users -> Obtener usuarios segun rol
 user_bp.route("/", methods=["GET"])(

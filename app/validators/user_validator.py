@@ -1,18 +1,8 @@
 import re
-from app.models.user import users_collection
-
 
 class UserValidator:
-    def __init__(self, collection=None):
-        """
-        Validator adaptado para MongoDB
-        """
-        if collection is not None:
-            self.collection = collection
-        else:
-            from app.models.user import users_collection
-            self.collection = users_collection
-
+    def __init__(self, collection):
+        self.collection = collection
 
     # ---------------------------
     # Utilidades
@@ -35,9 +25,6 @@ class UserValidator:
         return self._match_pattern(pattern, str(document))
 
     def is_document_registered(self, document: str) -> bool:
-        """
-        Verifica si ya existe un usuario con ese _id en MongoDB
-        """
         return self.collection.find_one({"_id": str(document)}) is not None
 
     # ---------------------------
@@ -55,20 +42,15 @@ class UserValidator:
     def is_valid_role(self, role) -> bool:
         if not self.is_present(role):
             return False
-        if not isinstance(role, str):
-            return False
         return role in {"admin", "master", "user"}
 
     # ---------------------------
-    # Name
+    # Name y Last Names
     # ---------------------------
     def is_valid_name(self, name) -> bool:
         pattern = r"^[a-zA-Z]+$"
         return self._match_pattern(pattern, name)
 
-    # ---------------------------
-    # Last Names
-    # ---------------------------
     def is_valid_last_name(self, last_name) -> bool:
         pattern = r"^[a-zA-Z]+$"
         return self._match_pattern(pattern, last_name)
@@ -83,9 +65,6 @@ class UserValidator:
         return self._match_pattern(pattern, email)
 
     def is_email_registered(self, email: str) -> bool:
-        """
-        Verifica si ya existe un usuario con ese email en MongoDB
-        """
         return self.collection.find_one({"email": email}) is not None
 
     # ---------------------------
