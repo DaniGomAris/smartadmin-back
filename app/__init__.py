@@ -1,12 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
 from .extensions import jwt
-from .routes.user_route import user_bp
-from .routes.auth_route import auth_bp
+from .routes.user_routes import user_bp
+from .routes.auth_routes import auth_bp
 from .handlers import register_all_handlers
-from .config.firebase import db
+from .config.mongo_config import db 
 from .config.config import config_by_name
 import os
+
 
 def create_app():
     app = Flask(__name__)
