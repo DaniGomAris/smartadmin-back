@@ -1,11 +1,10 @@
-# app/decorators/auth_decorators.py
 from functools import wraps
 from flask import jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
 
 def token_required(func):
     """
-    Decorador que exige un JWT valido en la petición.
+    Decorador que exige un JWT valido en la peticion
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -16,8 +15,10 @@ def token_required(func):
         return func(*args, **kwargs)
     return wrapper
 
-
 def role_required(allowed_roles: list):
+    """
+    Decorador que exige un rol valido en el JWT
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):

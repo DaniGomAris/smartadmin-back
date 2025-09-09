@@ -16,11 +16,8 @@ def parse_timedelta(env_var, default=None):
 class Config:
     FLASK_ENV = os.getenv("FLASK_ENV", "development")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "default-secret-key")
-
     JWT_ACCESS_TOKEN_EXPIRES = parse_timedelta("JWT_ACCESS_TOKEN_EXPIRES", "none")
     JWT_REFRESH_TOKEN_EXPIRES = parse_timedelta("JWT_REFRESH_TOKEN_EXPIRES", "none")
-
-    FIREBASE_KEY_PATH = os.getenv("FIREBASE_KEY_PATH", "firebase_key.json")
     DEBUG = False
     TESTING = False
 
