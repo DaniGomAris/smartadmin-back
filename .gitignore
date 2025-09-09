@@ -16,7 +16,6 @@ __pycache__/
 *.pyd
 
 # --- Secrets / Keys ---
-firebase_key.json   # Solo si sigues usando Firebase (puedes quitarlo si ya no)
 *.pem
 *.key
 
