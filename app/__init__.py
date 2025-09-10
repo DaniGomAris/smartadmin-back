@@ -5,7 +5,7 @@ from .routes.user_routes import user_bp
 from .routes.auth_routes import auth_bp
 from .handlers import register_all_handlers
 from .config.mongo_config import db 
-from .config.config import config_by_name
+from .config.app_config import config_by_name
 import os
 
 def create_app():
