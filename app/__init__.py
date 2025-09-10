@@ -8,7 +8,6 @@ from .config.mongo_config import db
 from .config.config import config_by_name
 import os
 
-
 def create_app():
     app = Flask(__name__)
     
