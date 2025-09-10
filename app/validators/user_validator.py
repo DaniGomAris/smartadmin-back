@@ -47,13 +47,9 @@ class UserValidator:
     # ---------------------------
     # Name y Last Names
     # ---------------------------
-    def is_valid_name(self, name) -> bool:
+    def is_valid_name_and_last_name(self, name) -> bool:
         pattern = r"^[a-zA-Z]+$"
         return self._match_pattern(pattern, name)
-
-    def is_valid_last_name(self, last_name) -> bool:
-        pattern = r"^[a-zA-Z]+$"
-        return self._match_pattern(pattern, last_name)
 
     # ---------------------------
     # Email

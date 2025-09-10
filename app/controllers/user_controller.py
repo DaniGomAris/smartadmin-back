@@ -11,7 +11,8 @@ class UserController:
 
     @staticmethod
     def get_users(user_id, role):
-        return jsonify(service.get_users(role))
+        # ya no pasamos role al servicio
+        return jsonify(service.get_users())
 
     @staticmethod
     def add_user(user_id, role):
