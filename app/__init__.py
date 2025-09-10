@@ -3,6 +3,7 @@ from flask_cors import CORS
 from .extensions import jwt
 from .routes.user_routes import user_bp
 from .routes.auth_routes import auth_bp
+from .routes.qr_route import qr_bp
 from .handlers import register_all_handlers
 from .config.mongo_config import db 
 from .config.app_config import config_by_name
@@ -23,6 +24,7 @@ def create_app():
     # Blueprints
     app.register_blueprint(user_bp, url_prefix="/users")
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(qr_bp, url_prefix="/qr")
     
     # Handlers globales
     register_all_handlers(app)

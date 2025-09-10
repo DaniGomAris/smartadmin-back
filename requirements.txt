@@ -15,3 +15,7 @@ requests>=2.32.4,<3.0
 
 # --- Database MongoDB ---
 pymongo>=4.8.0,<5.0
+
+# --- Codigo Qr ---
+qrcode[pil]==8.2
+Pillow>=9.1.0
