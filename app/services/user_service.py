@@ -26,7 +26,6 @@ class UserService:
         Devuelve usuarios según el rol extraído del JWT.
         """
 
-
         users = []
         try:
             claims = get_jwt()
@@ -200,6 +199,9 @@ class UserService:
             logger.error(f"Error updating user {user_id}: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
 
+    # ==============================
+    # DELETE USER
+    # ==============================
     @staticmethod
     def delete_user(user_id: str):
         """
@@ -226,6 +228,9 @@ class UserService:
             logger.error(f"Error in delete_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
 
+    # ==============================
+    # lOGIN USER
+    # ==============================
     @staticmethod
     def login_user(email: str, password: str):
         """
