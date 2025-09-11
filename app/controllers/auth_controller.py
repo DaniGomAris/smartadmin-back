@@ -8,7 +8,8 @@ class AuthController:
     @staticmethod
     def login_user():
         data = request.get_json()
-        document = data.get("document")
+        email = data.get("email")
         password = data.get("password")
-        response, status = service.login_user(document, password)
+        response, status = service.login_user(email, password)
         return jsonify(response), status
+

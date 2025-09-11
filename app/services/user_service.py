@@ -227,54 +227,32 @@ class UserService:
             return {"error": "Internal server error"}, 500
 
     @staticmethod
-    def login_user(document: str, password: str):
+    def login_user(email: str, password: str):
+        """
+        Login de usuario usando email.
+        Busca el usuario por email, obtiene su _id y genera token.
+        """
         try:
-            user_doc = users_collection.find_one({"_id": str(document)})
+            user_doc = users_collection.find_one({"email": email})
             if not user_doc:
-                return {"error": "Documento o contraseña incorrectos"}, 404
+                return {"error": "Email o contraseña incorrectos"}, 404
 
             if not verify_password(user_doc.get("password", ""), password):
-                return {"error": "Documento o contraseña incorrectos"}, 401
+                return {"error": "Email o contraseña incorrectos"}, 401
 
+            user_id = str(user_doc["_id"])  # usamos el _id real
             role = user_doc.get("role", "user")
-            access_token = generate_token(document, role)
+            access_token = generate_token(user_id, role)
 
-            logger.info(f"User logged in: {document} with role {role}")
+            logger.info(f"User logged in: {email} with role {role}")
             return {
                 "message": "Login exitoso",
                 "access_token": access_token,
-                "user": {"id": document, "role": role},
+                "user": {"id": user_id, "role": role, "email": email},
             }, 200
         except Exception as e:
             logger.error(f"Error in login_user: {e}", exc_info=True)
             return {"error": "Internal server error"}, 500
-
-    # ==============================
-    # LOGIN
-    # ==============================
-    @staticmethod
-    def login_user(document: str, password: str):
-        try:
-            user_doc = users_collection.find_one({"_id": str(document)})
-            if not user_doc:
-                return {"error": "Documento o contraseña incorrectos"}, 404
-
-            if not verify_password(user_doc.get("password", ""), password):
-                return {"error": "Documento o contraseña incorrectos"}, 401
-
-            role = user_doc.get("role", "user")
-            access_token = generate_token(document, role)
-
-            logger.info(f"User logged in: {document} with role {role}")
-            return {
-                "message": "Login exitoso",
-                "access_token": access_token,
-                "user": {"id": document, "role": role},
-            }, 200
-        except Exception as e:
-            logger.error(f"Error in login_user: {e}", exc_info=True)
-            return {"error": "Internal server error"}, 500
-
 
     # ==============================
     # GET LOGGED USER
